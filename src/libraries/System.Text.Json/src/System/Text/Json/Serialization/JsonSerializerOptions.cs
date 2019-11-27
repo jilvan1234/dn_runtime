@@ -33,6 +33,7 @@ namespace System.Text.Json
         private bool _ignoreReadOnlyProperties;
         private bool _propertyNameCaseInsensitive;
         private bool _writeIndented;
+        private bool _useNewtonsoftAttributes;
 
         /// <summary>
         /// Constructs a new <see cref="JsonSerializerOptions"/> instance.
@@ -293,6 +294,30 @@ namespace System.Text.Json
             {
                 VerifyMutable();
                 _writeIndented = value;
+            }
+        }
+
+        /// <summary>
+        /// Defines whether Newtonsoft.Json attributes should be read by the serializer, rather
+        /// than ignored, for both serialization and deserialization.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">
+        /// Thrown if this property is set after serialization or deserialization has occurred.
+        /// </exception>
+        /// <remarks>
+        /// By default, it's set to false. If set to true, attributes and options native to System.Text.Json
+        /// take precedence over Newtonsoft.Json attributes.
+        /// </remarks>
+        public bool UseNewtonsoftAttributes
+        {
+            get
+            {
+                return _useNewtonsoftAttributes;
+            }
+            set
+            {
+                VerifyMutable();
+                _useNewtonsoftAttributes = value;
             }
         }
 

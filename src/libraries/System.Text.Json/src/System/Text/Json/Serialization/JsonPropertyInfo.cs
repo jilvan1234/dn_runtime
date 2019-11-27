@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for more information.
 
 using System.Collections;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 using System.Text.Json.Serialization;
@@ -102,6 +103,29 @@ namespace System.Text.Json
                 }
 
                 NameAsString = name;
+            }
+            else if (Options.UseNewtonsoftAttributes)
+            {
+                string name = null;
+
+                foreach (Attribute attribute in Attributes)
+                {
+                    Type attributeType = attribute.GetType();
+
+                    if (attributeType.AssemblyQualifiedName.StartsWith("Newtonsoft.Json.JsonPropertyAttribute, Newtonsoft.Json"))
+                    {
+                        name = (string)attributeType.GetProperty("PropertyName")?.GetValue(attribute);
+
+                        if (name == null)
+                        {
+                            ThrowHelper.ThrowInvalidOperationException_SerializerPropertyNameNull(ParentClassType, this);
+                        }
+
+                        break;
+                    }
+                }
+
+                NameAsString = name ?? PropertyInfo.Name;
             }
             else
             {
@@ -284,6 +308,8 @@ namespace System.Text.Json
 
         public bool HasInternalConverter { get; private set; }
 
+        public object[] Attributes { get; private set; }
+
         public virtual void Initialize(
             Type parentClassType,
             Type declaredPropertyType,
@@ -303,6 +329,11 @@ namespace System.Text.Json
             ElementType = elementType;
             Options = options;
             CanBeNull = treatAsNullable || !runtimePropertyType.IsValueType;
+
+            if (options.UseNewtonsoftAttributes && propertyInfo != null)
+            {
+                Attributes = propertyInfo.GetCustomAttributes(inherit: false);
+            }
 
             if (converter != null)
             {

@@ -64,6 +64,7 @@
     <Compile Include="Serialization\ExceptionTests.cs" />
     <Compile Include="Serialization\ExtensionDataTests.cs" />
     <Compile Include="Serialization\JsonElementTests.cs" />
+    <Compile Include="Serialization\NewtonsoftAttributeTests.cs" />
     <Compile Include="Serialization\Null.ReadTests.cs" />
     <Compile Include="Serialization\Null.WriteTests.cs" />
     <Compile Include="Serialization\NullableTests.cs" />

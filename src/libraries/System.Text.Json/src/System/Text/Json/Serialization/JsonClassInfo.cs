@@ -176,7 +176,7 @@ namespace System.Text.Json
                         }
 
                         JsonPropertyInfo[] cacheArray;
-                        if (DetermineExtensionDataProperty(cache))
+                        if (DetermineExtensionDataProperty(cache, options))
                         {
                             // Remove from cache since it is handled independently.
                             cache.Remove(DataExtensionProperty.NameAsString);
@@ -226,9 +226,15 @@ namespace System.Text.Json
             }
         }
 
-        private bool DetermineExtensionDataProperty(Dictionary<string, JsonPropertyInfo> cache)
+        private bool DetermineExtensionDataProperty(Dictionary<string, JsonPropertyInfo> cache, JsonSerializerOptions options)
         {
             JsonPropertyInfo jsonPropertyInfo = GetPropertyWithUniqueAttribute(typeof(JsonExtensionDataAttribute), cache);
+
+            if (jsonPropertyInfo == null && options.UseNewtonsoftAttributes)
+            {
+                jsonPropertyInfo = GetPropertyWithUniqueNewtonsoftExtensionDataAttribute(cache);
+            }
+
             if (jsonPropertyInfo != null)
             {
                 Type declaredPropertyType = jsonPropertyInfo.DeclaredPropertyType;
@@ -260,6 +266,31 @@ namespace System.Text.Json
                     }
 
                     property = jsonPropertyInfo;
+                }
+            }
+
+            return property;
+        }
+
+        private JsonPropertyInfo GetPropertyWithUniqueNewtonsoftExtensionDataAttribute(Dictionary<string, JsonPropertyInfo> cache)
+        {
+            JsonPropertyInfo property = null;
+
+            foreach (JsonPropertyInfo jsonPropertyInfo in cache.Values)
+            {
+                foreach (Attribute attribute in jsonPropertyInfo.PropertyInfo.GetCustomAttributes(inherit: false))
+                {
+                    Type attributeType = attribute.GetType();
+
+                    if (attributeType.AssemblyQualifiedName.StartsWith("Newtonsoft.Json.JsonExtensionDataAttribute, Newtonsoft.Json"))
+                    {
+                        if (property != null)
+                        {
+                            ThrowHelper.ThrowInvalidOperationException_SerializationDuplicateTypeAttribute(Type, attributeType);
+                        }
+
+                        property = jsonPropertyInfo;
+                    }
                 }
             }
 
